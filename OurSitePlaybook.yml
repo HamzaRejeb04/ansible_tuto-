@@ -1,0 +1,111 @@
+---
+
+- hosts: all
+  become : true
+  pre_tasks:
+
+
+  - name: updating our servers (ubuntu)  
+    tags:  always
+    apt:
+      upgrade: dist
+      update_cache: yes
+      
+    when: ansible_distribution == "Ubuntu"
+
+  - name: updating our servers (centrOS)
+    dnf:
+      update_only: dist
+      update_cache: yes
+
+    when: ansible_distribution == "Ubuntu"
+
+- host: workstations
+  become: true
+  tasks:
+  - name: install unzipp
+    package:
+       name: unzip
+
+  - name: installing Terraform 
+    unarchive:
+      src: https:// releases.hshicorp.com/terraform/0.12.28/terraform_0.12.28_linux_amd64.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      mode: 0755
+      owner: root
+      group: root 
+     
+
+
+
+
+- hosts: web_servers
+  become: yes
+  tasks:
+
+  - name: installing apache and php  package for ubuntu servers
+    tags: apache,Ubuntu 
+    dnf:
+      name:
+       - apache2
+       - libapache2-mod-php
+      state: latest
+    when: ansible_distribution == "CentOS"
+  
+  - name: installing apache and php  package for centOs servers
+    tags: apache,CentOS
+    dnf:
+      name:
+       - httpd
+       - php
+      state: latest
+    when: ansible_distribution == "CentOS"
+
+  - name: copying html file 
+   tags: apache
+   copy:
+     src: default_site.html
+     dest: var/www/html/index.html
+     owner: root
+     group: root
+     mode: 0644
+  
+
+
+
+  
+- hosts: db_servers
+ become: true
+ tasks: db,CentOS
+
+- name: installing mariadb packages  (  CentOS )
+  tags: centOs
+  dnf:
+    name: mariadb
+    state: latest
+  when: ansible_distrubution == "CentOS"
+
+
+- name: installing mariadb packages  (  Ubuntu )
+  tags: db,ubuntu
+  dnf:
+    name: mariadb-server
+    state: latest
+  when: ansible_distrubution == "Ubuntu"
+
+
+
+
+
+
+- hosts: file-servers
+  become: yes
+  tasks:
+  
+  - name:  installing samba
+    tags: simba
+    package:
+        name: samba
+        state: latest
+
